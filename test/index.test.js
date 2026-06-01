@@ -7,10 +7,11 @@ test("turns curl into mock routes", () => {
   assert.equal(routes[0].method, "POST");
   assert.equal(routes[0].path, "/users");
   assert.deepEqual(routes[0].query, { role: "admin" });
-  assert.equal(routes[0].headers.authorization, "Bearer demo");
+  assert.equal(routes[0].headers.authorization, "[redacted]");
   assert.equal(routes[0].sampleBody, "{\"name\":\"Ada\"}");
   assert.match(generateServer(routes), /createServer/);
   assert.match(generateServer(routes), /requestUrl/);
+  assert.match(generateServer(routes), /queryMatches/);
 });
 
 test("handles multiline browser curl blocks", () => {
@@ -26,4 +27,10 @@ test("handles compact request flags and escaped quotes", () => {
   assert.equal(routes[0].sampleBody, '{"ok":true}');
   assert.deepEqual(parseCliArgs(["examples/requests.txt"]), { file: "examples/requests.txt" });
   assert.throws(() => parseCliArgs([]), /Usage:/);
+});
+
+test("redacts sensitive JSON body fields", () => {
+  const routes = parseCurl("curl https://api.example.com/login -d '{\"password\":\"secret\",\"name\":\"Ada\"}'");
+  assert.equal(routes[0].sampleBody, "{\"password\":\"[redacted]\",\"name\":\"Ada\"}");
+  assert.equal(routes[0].response, "{\"password\":\"[redacted]\",\"name\":\"Ada\"}");
 });

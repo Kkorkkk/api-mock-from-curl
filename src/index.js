@@ -46,6 +46,31 @@ function optionValue(tokens, names) {
   return "";
 }
 
+function redactHeaders(headers) {
+  const sensitive = /^(authorization|proxy-authorization|cookie|set-cookie|x-api-key|api-key)$/i;
+  return Object.fromEntries(Object.entries(headers).map(([name, value]) => [name, sensitive.test(name) ? "[redacted]" : value]));
+}
+
+function redactBody(body) {
+  if (!body || !/^[\[{]/.test(body.trim())) return body;
+  try {
+    const value = JSON.parse(body);
+    const redact = (item) => {
+      if (Array.isArray(item)) return item.map(redact);
+      if (item && typeof item === "object") {
+        return Object.fromEntries(Object.entries(item).map(([key, value]) => [
+          key,
+          /password|token|secret|api[_-]?key|authorization|cookie/i.test(key) ? "[redacted]" : redact(value)
+        ]));
+      }
+      return item;
+    };
+    return JSON.stringify(redact(value));
+  } catch {
+    return body;
+  }
+}
+
 export function parseCurl(text) {
   return splitCurlBlocks(text).map((block, index) => {
     const tokens = tokenize(block);
@@ -56,7 +81,7 @@ export function parseCurl(text) {
         headers[name.toLowerCase()] = value.join(":").trim();
       }
     }
-    const body = optionValue(tokens, ["-d", "--data", "--data-raw", "--data-binary"]);
+    const body = redactBody(optionValue(tokens, ["-d", "--data", "--data-raw", "--data-binary"]));
     const explicitMethod = optionValue(tokens, ["-X", "--request"]);
     const method = (explicitMethod || (body ? "POST" : "GET")).toUpperCase();
     const url = tokens.find((token) => /^https?:\/\//.test(token)) || "/";
@@ -67,7 +92,7 @@ export function parseCurl(text) {
       method,
       path: parsed.pathname,
       query: Object.fromEntries(parsed.searchParams),
-      headers,
+      headers: redactHeaders(headers),
       sampleBody: body,
       status: 200,
       response
@@ -76,7 +101,7 @@ export function parseCurl(text) {
 }
 
 export function generateServer(routes) {
-  return `import http from "node:http";\n\nconst routes = ${JSON.stringify(routes, null, 2)};\n\nasync function readBody(req) {\n  let body = "";\n  for await (const chunk of req) body += chunk;\n  return body;\n}\n\nconst server = http.createServer(async (req, res) => {\n  const requestUrl = new URL(req.url, "http://localhost");\n  const route = routes.find((item) => item.method === req.method && item.path === requestUrl.pathname);\n  res.setHeader("content-type", "application/json");\n  if (!route) { res.statusCode = 404; res.end(JSON.stringify({ error: "No mock route" })); return; }\n  const body = await readBody(req);\n  res.statusCode = route.status || 200;\n  res.end(route.response || JSON.stringify({ ok: true, route: route.id, method: route.method, path: route.path, query: Object.fromEntries(requestUrl.searchParams), headers: route.headers, sampleBody: route.sampleBody, receivedBody: body || null }));\n});\n\nserver.listen(process.env.PORT || 4040, () => console.log("mock server on http://localhost:" + (process.env.PORT || 4040)));\n`;
+  return `import http from "node:http";\n\nconst routes = ${JSON.stringify(routes, null, 2)};\n\nasync function readBody(req) {\n  let body = "";\n  for await (const chunk of req) body += chunk;\n  return body;\n}\n\nfunction queryMatches(routeQuery, searchParams) {\n  return Object.entries(routeQuery || {}).every(([key, value]) => searchParams.get(key) === String(value));\n}\n\nconst server = http.createServer(async (req, res) => {\n  const requestUrl = new URL(req.url, "http://localhost");\n  const route = routes.find((item) => item.method === req.method && item.path === requestUrl.pathname && queryMatches(item.query, requestUrl.searchParams));\n  res.setHeader("content-type", "application/json");\n  if (!route) { res.statusCode = 404; res.end(JSON.stringify({ error: "No mock route" })); return; }\n  const body = await readBody(req);\n  res.statusCode = route.status || 200;\n  res.end(route.response || JSON.stringify({ ok: true, route: route.id, method: route.method, path: route.path, query: Object.fromEntries(requestUrl.searchParams), headers: route.headers, sampleBody: route.sampleBody, receivedBody: body ? "[received]" : null }));\n});\n\nserver.listen(process.env.PORT || 4040, () => console.log("mock server on http://localhost:" + (process.env.PORT || 4040)));\n`;
 }
 
 export function parseCliArgs(args) {
