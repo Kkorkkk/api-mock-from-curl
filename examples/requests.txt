@@ -1,2 +1,6 @@
-curl -X GET https://api.example.com/users
-curl -X POST https://api.example.com/users -d '{"name":"Ada"}'
+curl 'https://api.example.com/users?role=admin' \
+  -H 'accept: application/json'
+
+curl -X POST 'https://api.example.com/users' \
+  -H 'content-type: application/json' \
+  --data-raw '{"name":"Ada"}'

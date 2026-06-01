@@ -1,7 +1,7 @@
 {
   "name": "api-mock-from-curl",
   "version": "0.1.0",
-  "description": "Generate a tiny mock HTTP server from cURL snippets.",
+  "description": "Generate a tiny mock HTTP server from browser-style cURL snippets.",
   "type": "module",
   "bin": {
     "api-mock-from-curl": "./src/index.js"
@@ -13,8 +13,9 @@
   "keywords": [
     "cli",
     "developer-tools",
-    "ai",
-    "github"
+    "curl",
+    "mock-server",
+    "api"
   ],
   "license": "MIT",
   "engines": {
