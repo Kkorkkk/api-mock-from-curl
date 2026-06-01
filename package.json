@@ -1,0 +1,38 @@
+{
+  "name": "api-mock-from-curl",
+  "version": "0.1.0",
+  "description": "Generate a tiny mock HTTP server from cURL snippets.",
+  "type": "module",
+  "bin": {
+    "api-mock-from-curl": "./src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js",
+    "test": "node --test"
+  },
+  "keywords": [
+    "cli",
+    "developer-tools",
+    "ai",
+    "github"
+  ],
+  "license": "MIT",
+  "engines": {
+    "node": ">=20"
+  },
+  "author": "Kkorkkk",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Kkorkkk/api-mock-from-curl.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Kkorkkk/api-mock-from-curl/issues"
+  },
+  "homepage": "https://github.com/Kkorkkk/api-mock-from-curl#readme",
+  "files": [
+    "src",
+    "examples",
+    "README.md",
+    "LICENSE"
+  ]
+}
