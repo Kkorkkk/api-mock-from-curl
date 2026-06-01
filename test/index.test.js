@@ -1,6 +1,6 @@
 import test from "node:test";
 import assert from "node:assert/strict";
-import { parseCurl, generateServer } from "../src/index.js";
+import { parseCliArgs, parseCurl, generateServer } from "../src/index.js";
 
 test("turns curl into mock routes", () => {
   const routes = parseCurl("curl -X POST https://api.example.com/users?role=admin -H 'Authorization: Bearer demo' --data-raw '{\"name\":\"Ada\"}'");
@@ -17,4 +17,13 @@ test("handles multiline browser curl blocks", () => {
   const routes = parseCurl("curl 'https://api.example.com/projects' \\\n  -H 'accept: application/json'\n");
   assert.equal(routes[0].method, "GET");
   assert.equal(routes[0].headers.accept, "application/json");
+});
+
+test("handles compact request flags and escaped quotes", () => {
+  const routes = parseCurl('curl -XPOST "https://api.example.com/messages" -H "x-note: say \\"hello\\"" -d "{\\"ok\\":true}"');
+  assert.equal(routes[0].method, "POST");
+  assert.equal(routes[0].headers["x-note"], 'say "hello"');
+  assert.equal(routes[0].sampleBody, '{"ok":true}');
+  assert.deepEqual(parseCliArgs(["examples/requests.txt"]), { file: "examples/requests.txt" });
+  assert.throws(() => parseCliArgs([]), /Usage:/);
 });
