@@ -2,6 +2,12 @@
 
 [![CI](https://github.com/Kkorkkk/api-mock-from-curl/actions/workflows/ci.yml/badge.svg)](https://github.com/Kkorkkk/api-mock-from-curl/actions/workflows/ci.yml)
 
+## Overview / 项目说明
+
+English: API Mock From cURL converts browser-style cURL snippets into a small local mock server. It is built for quickly preserving API examples, redacting sensitive headers and JSON secrets, and creating dependency-free fixtures for frontend or integration tests.
+
+中文：API Mock From cURL 会把浏览器里复制出来的 cURL 片段转换成一个小型本地 mock server。它适合快速保留 API 示例、自动遮蔽敏感 header 和 JSON 密钥字段，并生成无依赖的前端或集成测试 fixture。
+
 Paste cURL commands and generate a local mock server.
 
 ## Install
